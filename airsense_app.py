@@ -115,6 +115,8 @@ def get_recommendation(pm25, pm10, o3, nox, so2, co):
     return tips
 
 # ---------- App UI ----------
+aqi_data = None  # ✅ Fixes crash if form used before AQI is checked
+
 mode = st.selectbox("Select Mode", ["Citizen", "Industry (Coming Soon)"])
 
 if mode == "Citizen":
@@ -126,7 +128,7 @@ if mode == "Citizen":
         lat, lon = get_coordinates(location)
         if lat and lon:
             st.success(f"Data for {location}, {selected_date}")
-            aqi_data = get_live_aqi(lat, lon)
+          aqi_data = get_live_aqi(lat, lon)
 
 if not aqi_data or not isinstance(aqi_data, dict):
     st.error("❌ Could not fetch AQI data from OpenWeather API.")
@@ -143,6 +145,7 @@ else:
         st.write(f"**{pollutant.upper()}**: {value} µg/m³")
 
     nox = aqi_data.get("no", 0) + aqi_data.get("no2", 0)
+
     st.subheader("💡 Health Recommendations")
     for tip in get_recommendation(
         pm25=aqi_data.get("pm2_5", 0),
@@ -153,6 +156,8 @@ else:
         co=aqi_data.get("co", 0)
     ):
         st.markdown(f"- {tip}")
+  
+
 
 
 # ---------- Eco Scoreboard ----------
