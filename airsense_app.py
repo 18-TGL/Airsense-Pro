@@ -5,22 +5,16 @@ import requests
 import altair as alt
 import seaborn as sns
 import matplotlib.pyplot as plt
-# Already using: import requests
 from pathlib import Path
-
-
-import os
-
-API_KEY = st.secrets["API_KEY"]
-
-
 
 # ---------- Config ----------
 st.set_page_config(page_title="AirSense Pro", page_icon="🌿")
 st.title("🌿 AirSense Pro")
 st.markdown("##### 🌍 A Smart Air Quality Prediction Tool for Everyone")
 
-
+# ---------- API Setup ----------
+API_KEY = st.secrets["API_KEY"]
+BASE_AQI_URL = "http://api.openweathermap.org/data/2.5/air_pollution"
 
 # ---------- Styling ----------
 st.markdown("""
@@ -29,12 +23,9 @@ st.markdown("""
         background-color: white;
         font-family: "Segoe UI", sans-serif;
     }
-
     h1 {
         color: #2e7d32;
     }
-
-    /* Optional: Customize Streamlit components */
     .stButton>button {
         background-color: #2e7d32;
         color: white;
@@ -85,7 +76,7 @@ def calculate_aqi(pollutants):
 
     return None, "Unavailable", ""
 
-
+# ---------- Coordinates ----------
 def get_coordinates(location_name):
     url = "http://api.openweathermap.org/geo/1.0/direct"
     params = {
@@ -102,7 +93,7 @@ def get_coordinates(location_name):
         pass
     return None, None
 
-
+# ---------- AQI Fetching ----------
 def get_live_aqi(lat, lon):
     url = f"{BASE_AQI_URL}?lat={lat}&lon={lon}&appid={API_KEY}"
     try:
@@ -111,6 +102,7 @@ def get_live_aqi(lat, lon):
     except:
         return None
 
+# ---------- Health Tips ----------
 def get_recommendation(pm25, pm10, o3, nox, so2, co):
     tips = []
     if pm25 > 60: tips.append("😷 PM2.5 is high – Avoid outdoor activity and use an N95 mask.")
@@ -233,3 +225,5 @@ with st.form("pollution_form"):
             updated = report
         updated.to_csv(issue_file, index=False)
         st.success("📩 Thank you! Your report has been submitted.")
+
+
