@@ -7,32 +7,9 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-# ---------- Config ----------
-st.set_page_config(page_title="AirSense Pro", page_icon="🌿")
-st.title("🌿 AirSense Pro")
-st.markdown("##### 🌍 A Smart Air Quality Prediction Tool for Everyone")
-
 # ---------- API Setup ----------
 API_KEY = st.secrets["API_KEY"]
 BASE_AQI_URL = "http://api.openweathermap.org/data/2.5/air_pollution"
-
-# ---------- Styling ----------
-st.markdown("""
-    <style>
-    body {
-        background-color: white;
-        font-family: "Segoe UI", sans-serif;
-    }
-    h1 {
-        color: #2e7d32;
-    }
-    .stButton>button {
-        background-color: #2e7d32;
-        color: white;
-        border-radius: 8px;
-    }
-    </style>
-""", unsafe_allow_html=True)
 
 # ---------- AQI Calculation ----------
 def calculate_aqi(pollutants):
@@ -43,47 +20,29 @@ def calculate_aqi(pollutants):
         "no2": [(0, 40, 0, 50), (41, 80, 51, 100), (81, 180, 101, 200), (181, 280, 201, 300), (281, 400, 301, 400), (401, 500, 401, 500)],
         "o3": [(0, 50, 0, 50), (51, 100, 51, 100), (101, 168, 101, 200), (169, 208, 201, 300), (209, 748, 301, 400), (749, 1000, 401, 500)]
     }
-
-    category_map = [
-        (0, 50, "🟢 Good"),
-        (51, 100, "🟡 Satisfactory"),
-        (101, 200, "🟠 Moderate"),
-        (201, 300, "🔴 Poor"),
-        (301, 400, "🟣 Very Poor"),
-        (401, 500, "⚫ Severe")
-    ]
-
+    category_map = [(0, 50, "🟢 Good"), (51, 100, "🟡 Satisfactory"), (101, 200, "🟠 Moderate"), (201, 300, "🔴 Poor"), (301, 400, "🟣 Very Poor"), (401, 500, "⚫ Severe")]
     def get_individual_aqi(concentration, ranges):
         for (c_low, c_high, aqi_low, aqi_high) in ranges:
             if c_low <= concentration <= c_high:
                 return round(((aqi_high - aqi_low) / (c_high - c_low)) * (concentration - c_low) + aqi_low)
         return None
-
     results = {}
     for pollutant, value in pollutants.items():
         if pollutant in breakpoints:
             aqi = get_individual_aqi(value, breakpoints[pollutant])
             if aqi is not None:
                 results[pollutant] = aqi
-
     if results:
         max_pollutant = max(results, key=results.get)
         max_aqi = results[max_pollutant]
-
         for (low, high, category) in category_map:
             if low <= max_aqi <= high:
                 return max_aqi, category, max_pollutant.upper()
-
     return None, "Unavailable", ""
 
-# ---------- Coordinates ----------
 def get_coordinates(location_name):
     url = "http://api.openweathermap.org/geo/1.0/direct"
-    params = {
-        "q": location_name,
-        "limit": 1,
-        "appid": API_KEY
-    }
+    params = {"q": location_name, "limit": 1, "appid": API_KEY}
     try:
         response = requests.get(url, params=params)
         data = response.json()
@@ -93,7 +52,6 @@ def get_coordinates(location_name):
         pass
     return None, None
 
-# ---------- AQI Fetching ----------
 def get_live_aqi(lat, lon):
     url = f"{BASE_AQI_URL}?lat={lat}&lon={lon}&appid={API_KEY}"
     try:
@@ -102,7 +60,6 @@ def get_live_aqi(lat, lon):
     except:
         return None
 
-# ---------- Health Tips ----------
 def get_recommendation(pm25, pm10, o3, nox, so2, co):
     tips = []
     if pm25 > 60: tips.append("😷 PM2.5 is high – Avoid outdoor activity and use an N95 mask.")
@@ -114,9 +71,20 @@ def get_recommendation(pm25, pm10, o3, nox, so2, co):
     if not tips: tips.append("✅ All pollutant levels are within safe limits. Enjoy your day!")
     return tips
 
-# ---------- App UI ----------
-aqi_data = None  # ✅ Fixes crash if form used before AQI is checked
+# ---------- Streamlit UI ----------
+st.set_page_config(page_title="AirSense Pro", page_icon="🌿")
+st.title("🌿 AirSense Pro")
+st.markdown("##### 🌍 A Smart Air Quality Prediction Tool for Everyone")
 
+st.markdown("""
+    <style>
+    body { background-color: white; font-family: 'Segoe UI', sans-serif; }
+    h1 { color: #2e7d32; }
+    .stButton>button { background-color: #2e7d32; color: white; border-radius: 8px; }
+    </style>
+""", unsafe_allow_html=True)
+
+aqi_data = None
 mode = st.selectbox("Select Mode", ["Citizen", "Industry (Coming Soon)"])
 
 if mode == "Citizen":
@@ -128,37 +96,33 @@ if mode == "Citizen":
         lat, lon = get_coordinates(location)
         if lat and lon:
             st.success(f"Data for {location}, {selected_date}")
-          aqi_data = get_live_aqi(lat, lon)
+            aqi_data = get_live_aqi(lat, lon)
 
-if not aqi_data or not isinstance(aqi_data, dict):
-    st.error("❌ Could not fetch AQI data from OpenWeather API.")
-else:
-    aqi_value, aqi_category, aqi_pollutant = calculate_aqi(aqi_data)
-    if aqi_value:
-        st.subheader("🌐 Overall AQI Summary")
-        st.markdown(f"**AQI Value:** {aqi_value}  \n**Category:** {aqi_category}  \n**Dominant Pollutant:** {aqi_pollutant}")
-    else:
-        st.warning("Unable to determine AQI.")
+            if not aqi_data or not isinstance(aqi_data, dict):
+                st.error("❌ Could not fetch AQI data from OpenWeather API.")
+            else:
+                aqi_value, aqi_category, aqi_pollutant = calculate_aqi(aqi_data)
+                if aqi_value:
+                    st.subheader("🌐 Overall AQI Summary")
+                    st.markdown(f"**AQI Value:** {aqi_value}  \n**Category:** {aqi_category}  \n**Dominant Pollutant:** {aqi_pollutant}")
+                else:
+                    st.warning("Unable to determine AQI.")
 
-    st.subheader("🌫️ Live Pollutant Values")
-    for pollutant, value in aqi_data.items():
-        st.write(f"**{pollutant.upper()}**: {value} µg/m³")
+                st.subheader("🌫️ Live Pollutant Values")
+                for pollutant, value in aqi_data.items():
+                    st.write(f"**{pollutant.upper()}**: {value} µg/m³")
 
-    nox = aqi_data.get("no", 0) + aqi_data.get("no2", 0)
-
-    st.subheader("💡 Health Recommendations")
-    for tip in get_recommendation(
-        pm25=aqi_data.get("pm2_5", 0),
-        pm10=aqi_data.get("pm10", 0),
-        o3=aqi_data.get("o3", 0),
-        nox=nox,
-        so2=aqi_data.get("so2", 0),
-        co=aqi_data.get("co", 0)
-    ):
-        st.markdown(f"- {tip}")
-  
-
-
+                nox = aqi_data.get("no", 0) + aqi_data.get("no2", 0)
+                st.subheader("💡 Health Recommendations")
+                for tip in get_recommendation(
+                    pm25=aqi_data.get("pm2_5", 0),
+                    pm10=aqi_data.get("pm10", 0),
+                    o3=aqi_data.get("o3", 0),
+                    nox=nox,
+                    so2=aqi_data.get("so2", 0),
+                    co=aqi_data.get("co", 0)
+                ):
+                    st.markdown(f"- {tip}")
 
 # ---------- Eco Scoreboard ----------
 st.markdown("---")
@@ -176,7 +140,7 @@ with st.form("eco_score_form"):
         "🛍️ Reusable Bag": st.checkbox("Used cloth or reusable bags"),
         "🌿 Tree or Plant Care": st.checkbox("Planted or cared for plants"),
         "🗑️ Waste Segregation": st.checkbox("Segregated dry and wet waste"),
-        "🔌 Saved Electricity": st.checkbox("Turned off lights/fans when not needed"),
+        "🔌 Saved Electricity": st.checkbox("Turned off lights/fans when not needed")
     }
 
     submitted_eco = st.form_submit_button("🎯 Submit Eco Score")
@@ -229,5 +193,3 @@ with st.form("pollution_form"):
             updated = report
         updated.to_csv(issue_file, index=False)
         st.success("📩 Thank you! Your report has been submitted.")
-
-
