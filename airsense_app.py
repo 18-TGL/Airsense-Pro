@@ -128,33 +128,32 @@ if mode == "Citizen":
             st.success(f"Data for {location}, {selected_date}")
             aqi_data = get_live_aqi(lat, lon)
 
-            if aqi_data:
-                aqi_value, aqi_category, aqi_pollutant = calculate_aqi(aqi_data)
-                if aqi_value:
-                    st.subheader("🌐 Overall AQI Summary")
-                    st.markdown(f"**AQI Value:** {aqi_value}  \n**Category:** {aqi_category}  \n**Dominant Pollutant:** {aqi_pollutant}")
-                else:
-                    st.warning("Unable to determine AQI.")
+if not aqi_data or not isinstance(aqi_data, dict):
+    st.error("❌ Could not fetch AQI data from OpenWeather API.")
+else:
+    aqi_value, aqi_category, aqi_pollutant = calculate_aqi(aqi_data)
+    if aqi_value:
+        st.subheader("🌐 Overall AQI Summary")
+        st.markdown(f"**AQI Value:** {aqi_value}  \n**Category:** {aqi_category}  \n**Dominant Pollutant:** {aqi_pollutant}")
+    else:
+        st.warning("Unable to determine AQI.")
 
-                st.subheader("🌫️ Live Pollutant Values")
-                for pollutant, value in aqi_data.items():
-                    st.write(f"**{pollutant.upper()}**: {value} µg/m³")
+    st.subheader("🌫️ Live Pollutant Values")
+    for pollutant, value in aqi_data.items():
+        st.write(f"**{pollutant.upper()}**: {value} µg/m³")
 
-                nox = aqi_data.get("no", 0) + aqi_data.get("no2", 0)
-                st.subheader("💡 Health Recommendations")
-                for tip in get_recommendation(
-                    pm25=aqi_data.get("pm2_5", 0),
-                    pm10=aqi_data.get("pm10", 0),
-                    o3=aqi_data.get("o3", 0),
-                    nox=nox,
-                    so2=aqi_data.get("so2", 0),
-                    co=aqi_data.get("co", 0)
-                ):
-                    st.markdown(f"- {tip}")
-            else:
-                st.error("Could not fetch AQI data.")
-        else:
-            st.error("❌ Unable to locate this city.")
+    nox = aqi_data.get("no", 0) + aqi_data.get("no2", 0)
+    st.subheader("💡 Health Recommendations")
+    for tip in get_recommendation(
+        pm25=aqi_data.get("pm2_5", 0),
+        pm10=aqi_data.get("pm10", 0),
+        o3=aqi_data.get("o3", 0),
+        nox=nox,
+        so2=aqi_data.get("so2", 0),
+        co=aqi_data.get("co", 0)
+    ):
+        st.markdown(f"- {tip}")
+
 
 # ---------- Eco Scoreboard ----------
 st.markdown("---")
