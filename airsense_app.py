@@ -5,13 +5,14 @@ import requests
 import altair as alt
 import seaborn as sns
 import matplotlib.pyplot as plt
-from geopy.geocoders import Nominatim
+# Already using: import requests
 from pathlib import Path
-from dotenv import load_dotenv
+
+
 import os
 
-load_dotenv()
-API_KEY = os.getenv("API_KEY")
+API_KEY = st.secrets["API_KEY"]
+
 
 
 # ---------- Config ----------
@@ -86,11 +87,21 @@ def calculate_aqi(pollutants):
 
 
 def get_coordinates(location_name):
-    geolocator = Nominatim(user_agent="airsense_pro_app")
-    location = geolocator.geocode(location_name)
-    if location:
-        return location.latitude, location.longitude
+    url = "http://api.openweathermap.org/geo/1.0/direct"
+    params = {
+        "q": location_name,
+        "limit": 1,
+        "appid": API_KEY
+    }
+    try:
+        response = requests.get(url, params=params)
+        data = response.json()
+        if data:
+            return data[0]["lat"], data[0]["lon"]
+    except:
+        pass
     return None, None
+
 
 def get_live_aqi(lat, lon):
     url = f"{BASE_AQI_URL}?lat={lat}&lon={lon}&appid={API_KEY}"
