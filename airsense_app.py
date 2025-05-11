@@ -102,11 +102,27 @@ if mode == "Citizen":
                 st.error("❌ Could not fetch AQI data from OpenWeather API.")
             else:
                 aqi_value, aqi_category, aqi_pollutant = calculate_aqi(aqi_data)
-                if aqi_value:
-                    st.subheader("🌐 Overall AQI Summary")
-                    st.markdown(f"**AQI Value:** {aqi_value}  \n**Category:** {aqi_category}  \n**Dominant Pollutant:** {aqi_pollutant}")
-                else:
-                    st.warning("Unable to determine AQI.")
+if aqi_value:
+    st.subheader("🌐 Overall AQI Summary")
+    st.markdown(f"**AQI Value:** {aqi_value}  \n**Category:** {aqi_category}  \n**Dominant Pollutant:** {aqi_pollutant}")
+
+    with st.expander("📘 What do AQI values mean? (CPCB Standards)"):
+        st.markdown("""
+        **Air Quality Index (AQI)** helps us understand how clean or polluted the air is.  
+        Below are the Indian CPCB-defined categories and their health impacts:
+
+        | AQI Range | Category      | Color Code | Health Impact |
+        |-----------|---------------|------------|----------------|
+        | 0–50      | 🟢 Good        | Green      | Minimal impact |
+        | 51–100    | 🟡 Satisfactory | Yellow    | Minor discomfort for sensitive people |
+        | 101–200   | 🟠 Moderate     | Orange    | Breathing discomfort to sensitive groups |
+        | 201–300   | 🔴 Poor         | Red       | Discomfort on prolonged exposure |
+        | 301–400   | 🟣 Very Poor    | Purple    | Respiratory issues for most |
+        | 401–500   | ⚫ Severe       | Dark Gray | Serious health effects, even on healthy people |
+        """, unsafe_allow_html=True)
+else:
+    st.warning("Unable to determine AQI.")
+
 
                 st.subheader("🌫️ Live Pollutant Values")
                 for pollutant, value in aqi_data.items():
