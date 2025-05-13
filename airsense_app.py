@@ -95,28 +95,28 @@ if mode == "Citizen":
     selected_date = st.date_input("Select date", value=date.today())
 
     if st.button("🔍 Fetch AQI"):
-       if not location:
+    if not location:
         st.warning("⚠️ Please enter a location before fetching AQI.")
         st.stop()
 
-        lat, lon = get_coordinates(location)
-        st.write("DEBUG: lat =", lat, ", lon =", lon)
+    lat, lon = get_coordinates(location)
+    st.write("DEBUG: lat =", lat, ", lon =", lon)
 
     if lat and lon:
-       st.success(f"Data for {location}, {selected_date}")
-       aqi_data = get_live_aqi(lat, lon)
+        st.success(f"Data for {location}, {selected_date}")
+        aqi_data = get_live_aqi(lat, lon)
 
-    if not aqi_data or not isinstance(aqi_data, dict):
-        st.error("❌ Could not fetch AQI data from OpenWeather API.")
-    else:
-        aqi_value, aqi_category, aqi_pollutant = calculate_aqi(aqi_data)
+        if not aqi_data or not isinstance(aqi_data, dict):
+            st.error("❌ Could not fetch AQI data from OpenWeather API.")
+        else:
+            aqi_value, aqi_category, aqi_pollutant = calculate_aqi(aqi_data)
 
-        if aqi_value:
-            st.subheader("🌐 Overall AQI Summary")
-            st.markdown(f"**AQI Value:** {aqi_value}  \n**Category:** {aqi_category}  \n**Dominant Pollutant:** {aqi_pollutant}")
+            if aqi_value:
+                st.subheader("🌐 Overall AQI Summary")
+                st.markdown(f"**AQI Value:** {aqi_value}  \n**Category:** {aqi_category}  \n**Dominant Pollutant:** {aqi_pollutant}")
 
-            with st.expander("📘 What do AQI values mean? (CPCB Standards)"):
-                st.markdown("""
+                with st.expander("📘 What do AQI values mean? (CPCB Standards)"):
+                    st.markdown("""
 **Air Quality Index (AQI)** helps us understand how clean or polluted the air is.  
 Below are the Indian CPCB-defined categories and their health impacts:
 
@@ -128,25 +128,27 @@ Below are the Indian CPCB-defined categories and their health impacts:
 | 201–300   | 🔴 Poor         | Red       | Discomfort on prolonged exposure |
 | 301–400   | 🟣 Very Poor    | Purple    | Respiratory issues for most |
 | 401–500   | ⚫ Severe       | Dark Gray | Serious health effects, even on healthy people |
-                """, unsafe_allow_html=True)
-        else:
-            st.warning("Unable to determine AQI.")
+                    """, unsafe_allow_html=True)
+            else:
+                st.warning("Unable to determine AQI.")
 
-        st.subheader("🌫️ Live Pollutant Values")
-        for pollutant, value in aqi_data.items():
-            st.write(f"**{pollutant.upper()}**: {value} µg/m³")
+            st.subheader("🌫️ Live Pollutant Values")
+            for pollutant, value in aqi_data.items():
+                st.write(f"**{pollutant.upper()}**: {value} µg/m³")
 
-        nox = aqi_data.get("no", 0) + aqi_data.get("no2", 0)
-        st.subheader("💡 Health Recommendations")
-        for tip in get_recommendation(
-            pm25=aqi_data.get("pm2_5", 0),
-            pm10=aqi_data.get("pm10", 0),
-            o3=aqi_data.get("o3", 0),
-            nox=nox,
-            so2=aqi_data.get("so2", 0),
-            co=aqi_data.get("co", 0)
-        ):
-            st.markdown(f"- {tip}")
+            nox = aqi_data.get("no", 0) + aqi_data.get("no2", 0)
+            st.subheader("💡 Health Recommendations")
+            for tip in get_recommendation(
+                pm25=aqi_data.get("pm2_5", 0),
+                pm10=aqi_data.get("pm10", 0),
+                o3=aqi_data.get("o3", 0),
+                nox=nox,
+                so2=aqi_data.get("so2", 0),
+                co=aqi_data.get("co", 0)
+            ):
+                st.markdown(f"- {tip}")
+    else:
+        st.error("❌ Could not find location.")
 
 
 # ---------- Eco Scoreboard ----------
