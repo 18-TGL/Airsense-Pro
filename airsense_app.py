@@ -48,8 +48,10 @@ def get_coordinates(location_name):
         data = response.json()
         if data:
             return data[0]["lat"], data[0]["lon"]
-    except:
-        pass
+        else:
+            st.error("❌ No location found. Please check your input.")
+    except Exception as e:
+        st.error(f"Error fetching coordinates: {e}")
     return None, None
 
 def get_live_aqi(lat, lon):
@@ -93,7 +95,13 @@ if mode == "Citizen":
     selected_date = st.date_input("Select date", value=date.today())
 
     if st.button("🔍 Fetch AQI"):
+       if not location:
+        st.warning("⚠️ Please enter a location before fetching AQI.")
+        st.stop()
+
         lat, lon = get_coordinates(location)
+        st.write("DEBUG: lat =", lat, ", lon =", lon)
+
     if lat and lon:
        st.success(f"Data for {location}, {selected_date}")
        aqi_data = get_live_aqi(lat, lon)
