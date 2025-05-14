@@ -217,6 +217,7 @@ with st.form("pollution_form"):
     submitted_issue = st.form_submit_button("🚨 Submit Report")
 
     if submitted_issue:
+        # Build a one-row DataFrame for this report
         report = pd.DataFrame([{
             "Date": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M"),
             "Name": rep_name,
@@ -225,11 +226,25 @@ with st.form("pollution_form"):
             "Type": issue_type,
             "Description": issue_desc
         }])
+
+        # Path to the CSV file
         issue_file = Path("pollution_reports.csv")
+
+        # If file exists, read it and append; otherwise start fresh
         if issue_file.exists():
             existing = pd.read_csv(issue_file)
             updated = pd.concat([existing, report], ignore_index=True)
         else:
             updated = report
+
+        # Save back to CSV
         updated.to_csv(issue_file, index=False)
+
+        # OPTIONAL: Save uploaded images in a folder
+        img_folder = Path("uploaded_images")
+        img_folder.mkdir(exist_ok=True)
+        for img in uploaded_files:
+            with open(img_folder / img.name, "wb") as f:
+                f.write(img.getbuffer())
+
         st.success("📩 Thank you! Your report has been submitted.")
