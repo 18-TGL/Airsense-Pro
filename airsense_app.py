@@ -93,59 +93,62 @@ if mode == "Citizen":
     st.subheader("📍 Enter Your Location")
     location = st.text_input("Enter city or area", placeholder="e.g., Mumbai")
     selected_date = st.date_input("Select date", value=date.today())
+    
 if st.button("🔍 Fetch AQI"):
-    # 1️⃣ Check for blank input
-      if not location:
-          st.warning("⚠️ Please enter a location before fetching AQI.")
-      st.stop()
+    # 1. Guard: no input
+    if not location:
+        st.warning("⚠️ Please enter a location before fetching AQI.")
+        st.stop()
 
-    # 2️⃣ Get coordinates
-      lat, lon = get_coordinates(location)
-      st.write("DEBUG: lat =", lat, ", lon =", lon)  # remove/comment out later
+    # 2. Geocode
+    lat, lon = get_coordinates(location)
+    # st.write(f"DEBUG: lat={lat}, lon={lon}")  # optional debug
 
-    # 3️⃣ Fetch AQI only if we have valid coords
-      if lat and lon:
-          st.success(f"Data for {location}, {selected_date}")
-          aqi_data = get_live_aqi(lat, lon)
+    # 3. Only proceed if coords valid
+    if lat and lon:
+        st.success(f"Data for {location}, {selected_date}")
+        aqi_data = get_live_aqi(lat, lon)
 
-          # 4️⃣ Handle API failure
-           if not aqi_data or not isinstance(aqi_data, dict):
-               st.error("❌ Could not fetch AQI data from OpenWeather API.")
-       else:
-            # 5️⃣ Calculate & display AQI
-                  aqi_value, aqi_category, aqi_pollutant = calculate_aqi(aqi_data)
-                if aqi_value:
-                    st.subheader("🌐 Overall AQI Summary")
-            st.markdown(
+        # 4. Handle missing API data
+        if not aqi_data or not isinstance(aqi_data, dict):
+            st.error("❌ Could not fetch AQI data from OpenWeather API.")
+        else:
+            # 5. Calculate AQI
+            aqi_value, aqi_category, aqi_pollutant = calculate_aqi(aqi_data)
+
+            # 6. Display AQI summary
+            if aqi_value:
+                st.subheader("🌐 Overall AQI Summary")
+                st.markdown(
                     f"**AQI Value:** {aqi_value}  \n"
                     f"**Category:** {aqi_category}  \n"
                     f"**Dominant Pollutant:** {aqi_pollutant}"
                 )
-             with st.expander("📘 What do AQI values mean? (CPCB Standards)"):
-                  st.markdown("""
+                with st.expander("📘 What do AQI values mean? (CPCB Standards)"):
+                    st.markdown("""
 **Air Quality Index (AQI)** helps us understand how clean or polluted the air is.  
 Below are the Indian CPCB-defined categories and their health impacts:
 
-| AQI Range | Category      | Color Code | Health Impact |
-|-----------|---------------|------------|----------------|
-| 0–50      | 🟢 Good        | Green      | Minimal impact |
-| 51–100    | 🟡 Satisfactory | Yellow    | Minor discomfort for sensitive people |
-| 101–200   | 🟠 Moderate     | Orange    | Breathing discomfort to sensitive groups |
-| 201–300   | 🔴 Poor         | Red       | Discomfort on prolonged exposure |
-| 301–400   | 🟣 Very Poor    | Purple    | Respiratory issues for most |
-| 401–500   | ⚫ Severe       | Dark Gray | Serious health effects, even on healthy people |
+| AQI Range | Category       | Health Impact                                  |
+|-----------|----------------|-------------------------------------------------|
+| 0–50      | 🟢 Good         | Minimal impact                                  |
+| 51–100    | 🟡 Satisfactory  | Minor discomfort for sensitive people           |
+| 101–200   | 🟠 Moderate      | Breathing discomfort to sensitive groups        |
+| 201–300   | 🔴 Poor          | Discomfort on prolonged exposure                |
+| 301–400   | 🟣 Very Poor     | Respiratory issues for most                     |
+| 401–500   | ⚫ Severe        | Serious health effects, even on healthy people  |
                     """, unsafe_allow_html=True)
             else:
-                 st.warning("Unable to determine AQI.")
+                st.warning("Unable to determine AQI.")
 
-            # 6️⃣ Show pollutant breakdown
-                       st.subheader("🌫️ Live Pollutant Values")
-                 for pollutant, value in aqi_data.items():
-                     st.write(f"**{pollutant.upper()}**: {value} µg/m³")
+            # 7. Show pollutant values
+            st.subheader("🌫️ Live Pollutant Values")
+            for pollutant, value in aqi_data.items():
+                st.write(f"**{pollutant.upper()}**: {value} µg/m³")
 
-            # 7️⃣ Health tips
-                  nox = aqi_data.get("no", 0) + aqi_data.get("no2", 0)
-                  st.subheader("💡 Health Recommendations")
+            # 8. Health tips
+            nox = aqi_data.get("no", 0) + aqi_data.get("no2", 0)
+            st.subheader("💡 Health Recommendations")
             for tip in get_recommendation(
                 pm25=aqi_data.get("pm2_5", 0),
                 pm10=aqi_data.get("pm10", 0),
@@ -159,6 +162,7 @@ Below are the Indian CPCB-defined categories and their health impacts:
     else:
         st.error("❌ Could not find location.")
 
+   
 
 # ---------- Eco Scoreboard ----------
 st.markdown("---")
