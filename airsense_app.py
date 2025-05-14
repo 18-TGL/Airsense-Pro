@@ -100,8 +100,8 @@ if st.button("🔍 Fetch AQI"):
       st.stop()
 
     # 2️⃣ Get coordinates
-    lat, lon = get_coordinates(location)
-    st.write("DEBUG: lat =", lat, ", lon =", lon)  # remove/comment out later
+      lat, lon = get_coordinates(location)
+      st.write("DEBUG: lat =", lat, ", lon =", lon)  # remove/comment out later
 
     # 3️⃣ Fetch AQI only if we have valid coords
       if lat and lon:
