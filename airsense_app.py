@@ -208,11 +208,15 @@ with st.form("eco_score_form"):
 st.markdown("### 📢 Report a Pollution Issue")
 
 with st.form("pollution_form"):
-    rep_name = st.text_input("Your Name", key="rep_name")
-    rep_email = st.text_input("Email", key="rep_email")
+    rep_name     = st.text_input("Your Name", key="rep_name")
+    rep_email    = st.text_input("Email", key="rep_email")
     rep_location = st.text_input("Location")
-    issue_type = st.selectbox("Pollution Type", ["Air", "Noise", "Water", "Solid Waste", "Other"])
-    issue_desc = st.text_area("Describe the issue in detail")
+    issue_type   = st.selectbox("Pollution Type", ["Air", "Noise", "Water", "Solid Waste", "Other"])
+    issue_desc   = st.text_area("Describe the issue in detail")
+
+    uploaded_files = st.file_uploader(
+        "Upload images (optional)", type=["png", "jpg", "jpeg"], accept_multiple_files=True
+    )
 
     submitted_issue = st.form_submit_button("🚨 Submit Report")
 
@@ -240,7 +244,7 @@ with st.form("pollution_form"):
         # Save back to CSV
         updated.to_csv(issue_file, index=False)
 
-        # OPTIONAL: Save uploaded images in a folder
+        # Save uploaded images in a folder (optional)
         img_folder = Path("uploaded_images")
         img_folder.mkdir(exist_ok=True)
         for img in uploaded_files:
@@ -248,3 +252,4 @@ with st.form("pollution_form"):
                 f.write(img.getbuffer())
 
         st.success("📩 Thank you! Your report has been submitted.")
+
