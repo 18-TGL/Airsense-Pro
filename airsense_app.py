@@ -214,6 +214,7 @@ with st.form("pollution_form"):
     issue_type   = st.selectbox("Pollution Type", ["Air", "Noise", "Water", "Solid Waste", "Other"])
     issue_desc   = st.text_area("Describe the issue in detail")
 
+    # ✅ Add this uploader here
     uploaded_files = st.file_uploader(
         "Upload images (optional)", type=["png", "jpg", "jpeg"], accept_multiple_files=True
     )
@@ -221,7 +222,6 @@ with st.form("pollution_form"):
     submitted_issue = st.form_submit_button("🚨 Submit Report")
 
     if submitted_issue:
-        # Build a one-row DataFrame for this report
         report = pd.DataFrame([{
             "Date": pd.Timestamp.now().strftime("%Y-%m-%d %H:%M"),
             "Name": rep_name,
@@ -231,20 +231,17 @@ with st.form("pollution_form"):
             "Description": issue_desc
         }])
 
-        # Path to the CSV file
         issue_file = Path("pollution_reports.csv")
 
-        # If file exists, read it and append; otherwise start fresh
         if issue_file.exists():
             existing = pd.read_csv(issue_file)
             updated = pd.concat([existing, report], ignore_index=True)
         else:
             updated = report
 
-        # Save back to CSV
         updated.to_csv(issue_file, index=False)
 
-        # Save uploaded images in a folder (optional)
+        # ✅ This block works only if uploaded_files is defined above
         img_folder = Path("uploaded_images")
         img_folder.mkdir(exist_ok=True)
         for img in uploaded_files:
@@ -252,4 +249,5 @@ with st.form("pollution_form"):
                 f.write(img.getbuffer())
 
         st.success("📩 Thank you! Your report has been submitted.")
+
 
