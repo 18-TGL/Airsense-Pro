@@ -244,10 +244,18 @@ with st.form("pollution_form"):
         # ✅ This block works only if uploaded_files is defined above
         img_folder = Path("uploaded_images")
         img_folder.mkdir(exist_ok=True)
+
         for img in uploaded_files:
             with open(img_folder / img.name, "wb") as f:
-                f.write(img.getbuffer())
+                 f.write(img.getbuffer())
 
-        st.success("📩 Thank you! Your report has been submitted.")
+        # ✅ Show saved image names and thumbnails
+        for img in uploaded_files:
+            st.write(f"✅ Saved: {img.name}")
+            st.image(img, caption=img.name, width=150)
+
+
+
+            st.success("📩 Thank you! Your report has been submitted.")
 
 
