@@ -214,11 +214,6 @@ with st.form("pollution_form"):
     issue_type   = st.selectbox("Pollution Type", ["Air", "Noise", "Water", "Solid Waste", "Other"])
     issue_desc   = st.text_area("Describe the issue in detail")
 
-    # ✅ Add this uploader here
-    uploaded_files = st.file_uploader(
-        "Upload images (optional)", type=["png", "jpg", "jpeg"], accept_multiple_files=True
-    )
-
     submitted_issue = st.form_submit_button("🚨 Submit Report")
 
     if submitted_issue:
@@ -241,21 +236,24 @@ with st.form("pollution_form"):
 
         updated.to_csv(issue_file, index=False)
 
-        # ✅ This block works only if uploaded_files is defined above
-        img_folder = Path("uploaded_images")
-        img_folder.mkdir(exist_ok=True)
-
-        for img in uploaded_files:
-            with open(img_folder / img.name, "wb") as f:
-                 f.write(img.getbuffer())
-
-        # ✅ Show saved image names and thumbnails
-        for img in uploaded_files:
-            st.write(f"✅ Saved: {img.name}")
-            st.image(img, caption=img.name, width=150)
+        st.success("📩 Thank you! Your report has been submitted.")
 
 
+# Admin access to download pollution reports
+admin_key_input = st.text_input("Enter admin key to access report data", type="password")
 
-            st.success("📩 Thank you! Your report has been submitted.")
+if admin_key_input == st.secrets["ADMIN_KEY"]:
+    st.success("✅ Admin access granted.")
+    
+    # Load and preview the CSV
+    issue_file = Path("pollution_reports.csv")
+    if issue_file.exists():
+        report_df = pd.read_csv(issue_file)
+        st.dataframe(report_df)
 
+        # Download button
+        csv = report_df.to_csv(index=False).encode('utf-8')
+        st.download_button("📥 Download Pollution Report CSV", data=csv, file_name='pollution_reports.csv', mime='text/csv')
+    else:
+        st.warning("📭 No reports found yet.")
 
