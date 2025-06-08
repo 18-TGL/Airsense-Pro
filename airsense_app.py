@@ -62,6 +62,27 @@ def get_live_aqi(lat, lon):
     except:
         return None
 
+# -------------------------------------------
+# ✅ Insert this under "Live Pollutant Values"
+# -------------------------------------------
+
+# CPCB pollutant limits (24-hr average)
+pollutant_limits = {
+    "pm2_5": 60,
+    "pm10": 100,
+    "so2": 80,
+    "no2": 80,
+    "o3": 100,
+    "co": 2000,
+    "nh3": 400
+}
+
+st.subheader("🌫️ Live Pollutant Values with CPCB Standards")
+for pollutant, value in aqi_data.items():
+    limit = pollutant_limits.get(pollutant, "N/A")
+    st.write(f"**{pollutant.upper()}**: {value} µg/m³ (CPCB limit: {limit} µg/m³)")
+
+
 def get_recommendation(pm25, pm10, o3, nox, so2, co):
     tips = []
     if pm25 > 60: tips.append("😷 PM2.5 is high – Avoid outdoor activity and use an N95 mask.")
@@ -77,6 +98,7 @@ def get_recommendation(pm25, pm10, o3, nox, so2, co):
 st.set_page_config(page_title="AirSense Pro", page_icon="🌿")
 st.title("🌿 AirSense Pro")
 st.markdown("##### 🌍 A Smart Air Quality Prediction Tool for Everyone")
+st.markdown("**Empowering citizens to track air quality and report pollution for a greener tomorrow.** 💚")
 
 st.markdown("""
     <style>
@@ -204,6 +226,23 @@ with st.form("eco_score_form"):
             updated = entry
         updated.to_csv(eco_file, index=False)
 
+# -----------------------------------------------------
+# ✅ Insert after showing the eco score in scoreboard
+# -----------------------------------------------------
+
+with st.expander("🧠 How Your Actions Help (Eco Score Rationale)"):
+    st.markdown("""
+Here’s how your actions contribute to the environment and your health:
+
+- 🚶 **Walking or Cycling 1 km** → ~200g CO₂ saved (vs. car), improves heart health
+- 🛍️ **Using Reusable Bags** → Reduces ~1 kg of plastic per month
+- 🌿 **Planting/Caring for a Plant** → Each tree can absorb ~10 kg of CO₂ per year
+- 🗑️ **Waste Segregation** → Enables recycling, reduces landfill methane
+- 🔌 **Saving Electricity** → Every 1 kWh saved avoids ~0.9 kg CO₂ emissions
+
+These are rough but science-backed estimates — every small act matters! 💪🌍
+    """)
+
 # ---------- Pollution Report ----------
 st.markdown("### 📢 Report a Pollution Issue")
 
@@ -237,6 +276,21 @@ with st.form("pollution_form"):
         updated.to_csv(issue_file, index=False)
 
         st.success("📩 Thank you! Your report has been submitted.")
+# --------------------------------------------
+# ✅ Insert after pollution report submission
+# --------------------------------------------
+
+st.success("📩 Thank you! Your report has been submitted.")
+
+st.markdown("""
+---
+📢 **Disclaimer**  
+We value your privacy. Your name, email, and reports are stored securely and used only for environmental awareness and action.  
+Data is **not shared** with anyone without your permission.  
+Reports may be used in **anonymized form** to raise concerns with local authorities, NGOs, or media.
+
+Together, we can make our environment better. 💚
+""")
 
 
 # Admin access to download pollution reports
