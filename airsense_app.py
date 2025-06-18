@@ -164,11 +164,14 @@ if st.button("🔍 Fetch AQI"):
                     f"**Dominant Pollutant:** {aqi_pollutant}"
                 )
                 st.markdown(f"**🧠 AQI Suggestion:** {get_aqi_advice(aqi_value)}")
-                # ✅ CPCB Comparison Display Block (now in correct position)
-                st.subheader("🌫️ Live Pollutant Values with CPCB Standards")
-                for pollutant, value in aqi_data.items():
-                    limit = pollutant_limits.get(pollutant, "N/A")
-                    st.write(f"**{pollutant.upper()}**: {value} µg/m³ (CPCB limit: {limit} µg/m³)")
+                # ✅ Safe check: only run if AQI data is available
+                if "aqi_data" in locals() and aqi_data:
+                    st.subheader("🌫️ Live Pollutant Values with CPCB Standards")
+                    for pollutant, value in aqi_data.items():
+                        limit = pollutant_limits.get(pollutant, "N/A")
+                        st.write(f"**{pollutant.upper()}**: {value} µg/m³ (CPCB limit: {limit} µg/m³)")
+                else:
+                    st.warning("AQI data not available right now. Please try again later.")
 
             # 🔽 NEW: Save daily AQI for trend chart
             aqi_log_file = Path("aqi_trend_log.csv")
