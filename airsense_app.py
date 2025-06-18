@@ -6,6 +6,9 @@ import altair as alt
 import seaborn as sns
 import matplotlib.pyplot as plt
 from pathlib import Path
+aqi_data = None
+
+
 
 # ---------- API Setup ----------
 API_KEY = st.secrets["API_KEY"]
