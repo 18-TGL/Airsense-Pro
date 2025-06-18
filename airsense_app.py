@@ -53,6 +53,15 @@ def get_coordinates(location_name):
     except Exception as e:
         st.error(f"Error fetching coordinates: {e}")
     return None, None
+def get_city_aqi(city_name):
+    lat, lon = get_coordinates(city_name)
+    if lat and lon:
+        components = get_live_aqi(lat, lon)
+        if components:
+            aqi_value, category, _ = calculate_aqi(components)
+            return aqi_value, category
+    return None, "Unavailable"
+
 
 def get_live_aqi(lat, lon):
     url = f"{BASE_AQI_URL}?lat={lat}&lon={lon}&appid={API_KEY}"
@@ -76,11 +85,11 @@ pollutant_limits = {
     "co": 2000,
     "nh3": 400
 }
-
-st.subheader("🌫️ Live Pollutant Values with CPCB Standards")
-for pollutant, value in aqi_data.items():
-    limit = pollutant_limits.get(pollutant, "N/A")
-    st.write(f"**{pollutant.upper()}**: {value} µg/m³ (CPCB limit: {limit} µg/m³)")
+if aqi_data:
+   st.subheader("🌫️ Live Pollutant Values with CPCB Standards")
+   for pollutant, value in aqi_data.items():
+       limit = pollutant_limits.get(pollutant, "N/A")
+       st.write(f"**{pollutant.upper()}**: {value} µg/m³ (CPCB limit: {limit} µg/m³)")
 
 
 def get_recommendation(pm25, pm10, o3, nox, so2, co):
@@ -115,7 +124,20 @@ if mode == "Citizen":
     st.subheader("📍 Enter Your Location")
     location = st.text_input("Enter city or area", placeholder="e.g., Mumbai")
     selected_date = st.date_input("Select date", value=date.today())
-    
+def get_aqi_advice(aqi_value):
+    if aqi_value <= 50:
+        return "🟢 Air is Good. Perfect time for a walk or outdoor activities."
+    elif aqi_value <= 100:
+        return "🟡 Air is Satisfactory. Outdoor activities are safe for most, but sensitive groups may take precautions."
+    elif aqi_value <= 200:
+        return "🟠 Moderate Air Quality. Consider indoor workouts or wear a mask outdoors."
+    elif aqi_value <= 300:
+        return "🔴 Poor Air Quality. Limit outdoor activity. Use a purifier indoors if possible."
+    elif aqi_value <= 400:
+        return "🟣 Very Poor. Avoid outdoor exercise. Use N95 masks and keep windows shut."
+    else:
+        return "⚫ Severe! Stay indoors with air filtration. Health risk for all groups."
+
 if st.button("🔍 Fetch AQI"):
     # 1. Guard: no input
     if not location:
@@ -146,6 +168,79 @@ if st.button("🔍 Fetch AQI"):
                     f"**Category:** {aqi_category}  \n"
                     f"**Dominant Pollutant:** {aqi_pollutant}"
                 )
+                st.markdown(f"**🧠 AQI Suggestion:** {get_aqi_advice(aqi_value)}")
+            # 🔽 NEW: Save daily AQI for trend chart
+            aqi_log_file = Path("aqi_trend_log.csv")
+            today_str = pd.Timestamp.now().strftime("%Y-%m-%d")
+
+            new_entry = pd.DataFrame([{
+               "Date": today_str,
+               "Location": location,
+               "AQI": aqi_value
+}             ])
+
+           if aqi_log_file.exists():
+              existing = pd.read_csv(aqi_log_file)
+              # Avoid duplicate entries for same day/location
+              existing = existing[~((existing["Date"] == today_str) &  (existing["Location"] == location))]   
+              updated = pd.concat([existing, new_entry], ignore_index=True)
+          else:
+              updated = new_entry
+
+          updated.to_csv(aqi_log_file, index=False)
+
+           # 🔽 NEW: Display 7-day AQI trend
+           st.subheader("📈 7-Day AQI Trend")
+
+           if aqi_log_file.exists():
+              log_df = pd.read_csv(aqi_log_file)
+              log_df = log_df[log_df["Location"] == location]
+              log_df["Date"] = pd.to_datetime(log_df["Date"])
+              log_df = log_df.sort_values("Date").tail(7)
+
+              if not log_df.empty:
+                 chart = alt.Chart(log_df).mark_line(point=True).encode(
+                      x="Date:T",
+                      y="AQI:Q",
+                      tooltip=["Date", "AQI"]
+                   ).properties(title="AQI Trend (Last 7 Days)")
+                   st.altair_chart(chart, use_container_width=True)
+               else:
+                   st.info("No data yet for trend chart. Please revisit daily.")
+               else:
+                   st.info("AQI trend data will appear once you visit daily.")
+
+              # 🌍 City-to-City AQI Comparison
+              st.subheader("🌍 Compare AQI with Other Cities")
+
+              comparison_cities = ["Delhi", "Pune", "New York", "London"]
+              city_comparison_data = []
+
+              for city in comparison_cities:
+                  city_aqi, city_cat = get_city_aqi(city)
+                  if city_aqi:
+                     city_comparison_data.append({"City": city, "AQI": city_aqi, "Category": city_cat})
+                  else:
+                     city_comparison_data.append({"City": city, "AQI": 0, "Category": "Unavailable"})
+
+             # Add user city at the bottom
+             city_comparison_data.append({"City": location, "AQI": aqi_value, "Category": aqi_category})
+
+             df_compare = pd.DataFrame(city_comparison_data)
+ 
+             st.dataframe(df_compare)
+
+             # 📊 Optional: bar chart
+             st.subheader("📊 AQI Comparison Chart")
+             chart = alt.Chart(df_compare).mark_bar().encode(
+                  x="City",
+                  y="AQI",
+              color="City",
+            tooltip=["City", "AQI", "Category"]
+).properties(height=300)
+
+            st.altair_chart(chart, use_container_width=True)
+
                 with st.expander("📘 What do AQI values mean? (CPCB Standards)"):
                     st.markdown("""
 **Air Quality Index (AQI)** helps us understand how clean or polluted the air is.  
